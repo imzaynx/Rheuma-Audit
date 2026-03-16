@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1558b0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TB Audit">
+<meta name="description" content="TB Screening Audit — PIMS Rheumatology EULAR 2022">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<title>TB Audit — PIMS Rheumatology</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{height:100%;font-size:16px}
+body{font-family:'Instrument Sans',system-ui,sans-serif;background:#f0f4f9;color:#0f172a;height:100%;overscroll-behavior:none;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
+
+/* ═══════════════════════════════════════════════════════════
+   TOKENS
+═══════════════════════════════════════════════════════════ */
+:root{
+  --bg0:#f0f4f9;   --bg1:#ffffff;   --bg2:#f8fafd;   --bg3:#eef2f8;
+  --card:#ffffff;  --card2:#f8fafd;
+  --teal:#0891b2;  --teal2:#0e7490; --teal-dim:#e0f7fa;
+  --blue:#1558b0;  --blue-dim:#dbeafe;
+  --amber:#b45309; --amber-dim:#fef3c7;
+  --rose:#be123c;  --rose-dim:#ffe4e6;
+  --green:#15803d; --green-dim:#dcfce7;
+  --slate:#64748b; --slate2:#475569; --slate3:#1e293b;
+  --border:#dde6f0; --border2:#c8d8ec;
+  --text:#0f172a;  --text2:#334155;  --text3:#64748b;
+  --header-h:62px; --nav-h:64px;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --r:12px; --r-sm:8px; --r-lg:16px;
+  --shadow:0 2px 12px rgba(15,37,100,.08);
+  --glow-teal:0 0 16px rgba(8,145,178,.12);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SHELL
+═══════════════════════════════════════════════════════════ */
+#app{display:flex;flex-direction:column;height:100dvh;height:100vh;background:var(--bg0)}
+
+/* ─── HEADER ─────────────────────────────────────────────── */
+.hdr{
+  height:var(--header-h);flex-shrink:0;
+  background:linear-gradient(135deg,#1244a0 0%,#1a5fc8 100%);
+  border-bottom:1px solid rgba(255,255,255,.15);
+  display:flex;align-items:center;padding:0 16px;gap:13px;
+  position:relative;z-index:60;
+  box-shadow:0 2px 16px rgba(18,68,160,.3);
+}
+/* animated shimmer across header */
+.hdr::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.06) 50%,transparent 100%);
+  animation:hdr-shimmer 4s ease-in-out infinite;
+}
+@keyframes hdr-shimmer{0%,100%{opacity:0}50%{opacity:1}}
+
+/* SVG logo mark */
+.hdr-logo{
+  width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+.hdr-logo svg{width:26px;height:26px}
+
+.hdr-text{flex:1;min-width:0}
+.hdr-title{
+  font-size:14px;font-weight:700;color:#f1f5f9;
+  letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.hdr-sub{font-size:10.5px;color:rgba(255,255,255,.75);margin-top:1px;font-weight:500;letter-spacing:.02em}
+.hdr-chip{
+  flex-shrink:0;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);
+  color:#fff;font-size:9.5px;font-weight:700;padding:3px 9px;
+  border-radius:20px;letter-spacing:.06em;white-space:nowrap;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* ─── BANNERS ────────────────────────────────────────────── */
+.banner{display:none;flex-shrink:0}
+.banner.show{display:flex}
+.install-banner{
+  background:linear-gradient(90deg,#1244a0,#1a5fc8);
+  border-bottom:1px solid rgba(255,255,255,.1);
+  padding:10px 16px;align-items:center;gap:12px;
+}
+.install-text{flex:1;font-size:12px;color:rgba(255,255,255,.85)}
+.install-text strong{display:block;font-weight:700;color:#fff;margin-bottom:1px}
+.install-text span{font-size:11px;opacity:.7}
+.install-cta{
+  flex-shrink:0;background:#fff;color:#1244a0;
+  padding:8px 16px;border-radius:var(--r-sm);font-size:12px;
+  font-weight:700;border:none;cursor:pointer;white-space:nowrap;
+}
+.edit-banner{
+  background:linear-gradient(90deg,#fef3c7,#fde68a);
+  border-bottom:1px solid #fcd34d;
+  padding:9px 16px;align-items:center;justify-content:space-between;gap:8px;
+}
+.edit-banner-text{font-size:12.5px;font-weight:700;color:#92400e;display:flex;align-items:center;gap:7px}
+.cancel-btn{
+  background:rgba(146,64,14,.12);border:1px solid rgba(146,64,14,.25);
+  color:#92400e;padding:6px 13px;border-radius:var(--r-sm);
+  font-size:12px;font-weight:700;cursor:pointer;
+}
+
+/* ─── SCROLL ─────────────────────────────────────────────── */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+
+/* ─── BOTTOM NAV ─────────────────────────────────────────── */
+.bnav{
+  height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);
+  background:#ffffff;border-top:1px solid var(--border);
+  display:flex;flex-shrink:0;box-shadow:0 -2px 12px rgba(15,37,100,.08);
+}
+.nb{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;border:none;background:transparent;cursor:pointer;padding:8px 4px;
+  position:relative;transition:background .15s;
+}
+.nb:active{background:#f0f4f9}
+.nb-icon{font-size:21px;line-height:1;transition:transform .2s}
+.nb-lbl{font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;font-family:'JetBrains Mono',monospace}
+.nb.active .nb-lbl{color:var(--blue)}
+.nb.active .nb-icon{transform:scale(1.1)}
+.nb.active::before{
+  content:'';position:absolute;top:0;left:20%;right:20%;height:2px;
+  background:var(--blue);border-radius:0 0 4px 4px;
+  box-shadow:0 0 6px rgba(21,88,176,.3);
+}
+.nb-badge{
+  position:absolute;top:6px;right:calc(50% - 20px);
+  background:var(--blue);color:#fff;font-size:9px;font-weight:800;
+  min-width:16px;height:16px;border-radius:99px;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 4px;border:2px solid #ffffff;
+  font-family:'JetBrains Mono',monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PAGES
+═══════════════════════════════════════════════════════════ */
+.page{display:none}
+.page.active{display:block}
+.pad{padding:16px 14px 28px}
+
+/* ═══════════════════════════════════════════════════════════
+   PROGRESS STRIP
+═══════════════════════════════════════════════════════════ */
+.prog-card{
+  background:#fff;border:1px solid var(--border);border-radius:var(--r);
+  padding:13px 16px;margin-bottom:14px;box-shadow:var(--shadow);
+}
+.prog-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:9px}
+.prog-lbl{font-size:12.5px;font-weight:600;color:var(--text2)}
+.prog-pct{font-size:13px;font-weight:700;color:var(--blue);font-family:'JetBrains Mono',monospace}
+.prog-track{height:6px;background:#e2e8f0;border-radius:99px;overflow:hidden}
+.prog-fill{
+  height:6px;border-radius:99px;
+  background:linear-gradient(90deg,var(--blue),#0891b2);
+  transition:width .45s cubic-bezier(.4,0,.2,1);
+}
+.prog-steps{display:flex;gap:5px;margin-top:9px}
+.prog-step{flex:1;height:3px;border-radius:99px;background:#e2e8f0;transition:background .3s}
+.prog-step.done{background:var(--teal2,#0891b2)}
+.prog-step.active{background:var(--blue)}
+
+/* ═══════════════════════════════════════════════════════════
+   SECTION CARDS
+═══════════════════════════════════════════════════════════ */
+.sec{
+  background:#ffffff;border:1px solid var(--border);
+  border-radius:var(--r);margin-bottom:12px;overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.sec-hd{
+  padding:13px 15px;display:flex;align-items:center;gap:11px;
+  cursor:pointer;user-select:none;-webkit-user-select:none;
+  border-left:3px solid transparent;transition:background .18s;
+}
+.sec-hd:active{background:#f5f8ff}
+.sec-emoji{font-size:20px;flex-shrink:0}
+.sec-inf{flex:1;min-width:0}
+.sec-name{font-size:13px;font-weight:700;letter-spacing:-.01em}
+.sec-sub{font-size:10.5px;color:#94a3b8;margin-top:2px;font-weight:500}
+.sec-cnt{font-size:10px;font-family:'JetBrains Mono',monospace;color:#94a3b8;flex-shrink:0}
+.chevron{font-size:11px;color:var(--slate);transition:transform .22s;flex-shrink:0;margin-left:4px}
+.sec.collapsed .chevron{transform:rotate(-90deg)}
+.sec-div{height:1px;background:#e8f0f8;margin:0 15px}
+.sec.collapsed .sec-body,.sec.collapsed .sec-div{display:none}
+.sec-body{padding:4px 13px 14px}
+
+/* ═══════════════════════════════════════════════════════════
+   FIELDS
+═══════════════════════════════════════════════════════════ */
+.fld{padding:12px 0;border-bottom:1px solid #f0f4f9}
+.fld:last-child{border-bottom:none;padding-bottom:2px}
+.fld-lbl{
+  font-size:12.5px;font-weight:600;color:#334155;
+  margin-bottom:9px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;line-height:1.4;
+}
+.req{color:#f87171;font-size:10.5px;font-weight:800}
+.badge-hint{
+  font-size:9.5px;font-weight:600;background:#f1f5f9;color:#64748b;
+  padding:2px 7px;border-radius:4px;letter-spacing:.02em;
+}
+
+/* ─── INPUTS ─────────────────────────────────────────────── */
+input[type=text],input[type=number],input[type=date],select{
+  width:100%;padding:10px 13px;
+  border:1.5px solid #d1dbe8;border-radius:var(--r-sm);
+  font-family:inherit;font-size:13.5px;color:var(--text);
+  background:#f8fafd;outline:none;-webkit-appearance:none;appearance:none;
+  transition:border-color .18s,box-shadow .18s,background .18s;
+}
+input:focus,select:focus{
+  border-color:var(--blue);background:#fff;
+  box-shadow:0 0 0 3px rgba(21,88,176,.1);
+}
+input.error,select.error{border-color:var(--rose);box-shadow:0 0 0 3px rgba(244,63,94,.1)}
+select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%2364748b' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;
+  padding-right:34px;cursor:pointer;
+}
+.inp-row{display:flex;gap:9px}.inp-row>*{flex:1;min-width:0}
+
+/* ─── PILL RADIOS ────────────────────────────────────────── */
+.pill-grp{display:flex;flex-wrap:wrap;gap:7px}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 13px;
+  border:1.5px solid #d1dbe8;border-radius:var(--r-sm);cursor:pointer;
+  font-size:12.5px;font-weight:500;background:#f8fafd;color:#475569;
+  font-family:inherit;transition:all .14s;user-select:none;-webkit-user-select:none;
+}
+.pill:active{transform:scale(.96)}
+.pill.sel{font-weight:700;background:#fff}
+.pdot{width:7px;height:7px;border-radius:50%;border:2px solid currentColor;flex-shrink:0;transition:background .14s}
+.pill.sel .pdot{background:currentColor}
+
+/* ─── CHECKBOX PILLS ─────────────────────────────────────── */
+.chk-pill{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 13px;
+  border:1.5px solid #d1dbe8;border-radius:var(--r-sm);cursor:pointer;
+  font-size:12.5px;font-weight:500;background:#f8fafd;color:#475569;
+  font-family:inherit;transition:all .14s;user-select:none;
+}
+.chk-pill:active{transform:scale(.96)}
+.chk-pill.sel{font-weight:700;background:#fff}
+.cbox{
+  width:15px;height:15px;border-radius:4px;border:2px solid currentColor;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;
+  transition:background .14s;
+}
+.chk-pill.sel .cbox{background:currentColor;color:#fff}
+.chk-pill.sel .cbox::after{content:'✓';color:#fff}
+
+/* ─── CONDITIONAL ────────────────────────────────────────── */
+.cond{
+  background:#fffbeb;border:1px dashed #fcd34d;
+  border-radius:var(--r);padding:13px 13px 5px;margin-top:10px;display:none;
+}
+.cond.show{display:block;animation:fadeIn .2s ease}
+.cond-title{font-size:10px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.skip-box{background:#f0fdf4;border:1px solid #86efac;border-radius:var(--r-sm);padding:10px 13px;font-size:12px;color:#15803d;font-weight:600;margin-top:10px;display:none}
+.skip-box.show{display:block}
+
+/* ─── ERROR ALERT ────────────────────────────────────────── */
+.err-alert{
+  background:#fef2f2;border:1px solid #fca5a5;
+  border-radius:var(--r);padding:11px 14px;font-size:12.5px;
+  color:#b91c1c;margin-bottom:14px;display:none;font-weight:500;
+}
+.err-alert.show{display:flex;align-items:flex-start;gap:8px}
+
+/* ─── SAVE BUTTON ────────────────────────────────────────── */
+.save-btn{
+  width:100%;padding:15px;border:none;border-radius:var(--r);
+  font-size:14.5px;font-weight:700;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  transition:all .2s;margin-top:6px;letter-spacing:-.01em;
+}
+.save-btn:active{transform:scale(.98)}
+.save-btn.default{background:var(--blue);color:#fff;box-shadow:0 4px 16px rgba(21,88,176,.3)}
+.save-btn.success{background:#15803d;color:#fff}
+.save-btn.editing{background:#b45309;color:#fff}
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD / ANALYSIS
+═══════════════════════════════════════════════════════════ */
+.kpi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.kpi{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:12px 10px;text-align:center;box-shadow:var(--shadow)}
+.kpi-n{font-size:22px;font-weight:800;line-height:1;font-family:'JetBrains Mono',monospace}
+.kpi-l{font-size:9.5px;font-weight:600;color:#64748b;margin-top:3px;line-height:1.3;text-transform:uppercase;letter-spacing:.04em}
+
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:12px;box-shadow:var(--shadow)}
+.chart-title{font-size:12px;font-weight:700;color:#334155;margin-bottom:13px;letter-spacing:.02em;text-transform:uppercase}
+.chart-wrap{position:relative;width:100%;margin-bottom:4px}
+.chart-canvas{width:100%!important}
+
+.donut-wrap{display:flex;align-items:center;gap:14px}
+.donut-canvas{flex-shrink:0}
+.donut-leg{flex:1;min-width:0}
+.leg-row{display:flex;align-items:center;gap:7px;margin-bottom:7px;font-size:11.5px}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.leg-lbl{flex:1;font-weight:500;color:#475569}
+.leg-val{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:11px}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.two-col .chart-card{margin-bottom:0}
+
+.sec-sep{font-size:9.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin:16px 0 10px;display:flex;align-items:center;gap:8px}
+.sec-sep::after{content:'';flex:1;height:1px;background:#e2e8f0}
+
+.comp-bar{height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden;display:flex;margin-top:10px}
+.comp-seg{height:10px;transition:width .6s ease}
+
+.ftable{width:100%;border-collapse:collapse;font-size:11.5px}
+.ftable th{background:#f0f7ff;color:#1558b0;padding:7px 10px;text-align:left;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #dde6f0}
+.ftable td{padding:6px 10px;border-bottom:1px solid #f0f4f9;color:#475569;vertical-align:middle}
+.ftable tr:last-child td{border:none}
+.ftable td:first-child{color:#334155;font-weight:500}
+.ftable td:nth-child(2){font-family:'JetBrains Mono',monospace;color:#1558b0;font-weight:700}
+.ftable td:nth-child(3){font-family:'JetBrains Mono',monospace;color:#94a3b8;font-size:10.5px}
+
+.export-btn{width:100%;padding:13px;background:#f0f7ff;color:#1558b0;border:1px solid #bdd5f5;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
+.export-btn:active{transform:scale(.98)}
+
+/* ═══════════════════════════════════════════════════════════
+   RECORDS
+═══════════════════════════════════════════════════════════ */
+.rec-tb{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+.rec-title{font-size:13.5px;font-weight:700;color:#1e293b;letter-spacing:-.01em}
+.rec-exp{background:#f0f7ff;color:#1558b0;border:1px solid #bdd5f5;border-radius:var(--r-sm);padding:7px 13px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:5px}
+
+.entry{background:#fff;border:1px solid #dde6f0;border-radius:var(--r);padding:13px 14px;margin-bottom:10px;border-left:3px solid #dde6f0;box-shadow:var(--shadow);transition:border-left-color .2s}
+.entry.fc{border-left-color:var(--green)}
+.entry.pt{border-left-color:var(--amber)}
+.entry.nc{border-left-color:var(--rose)}
+.entry-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.entry-mr{font-size:14.5px;font-weight:700;color:#0f172a;letter-spacing:-.01em}
+.entry-meta{font-size:11px;color:#64748b;margin-top:3px;font-weight:500;line-height:1.5}
+.entry-acts{display:flex;gap:7px;flex-shrink:0;margin-top:1px}
+.act{padding:6px 12px;border:none;border-radius:var(--r-sm);font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s}
+.act-edit{background:#eff6ff;color:#1558b0;border:1px solid #bfdbfe}
+.act-del{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}
+.entry-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px;align-items:center}
+.etag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.02em}
+.entry-aud{font-size:10px;color:#94a3b8;margin-left:auto;font-style:italic}
+
+/* ═══════════════════════════════════════════════════════════
+   EXPORT PAGE
+═══════════════════════════════════════════════════════════ */
+.exp-sec-title{font-size:9.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.exp-sec-title::after{content:'';flex:1;height:1px;background:#e2e8f0}
+.exp-section{margin-bottom:18px}
+.exp-card{background:#fff;border:1px solid #dde6f0;border-radius:var(--r);padding:15px;margin-bottom:9px;display:flex;align-items:center;gap:13px;box-shadow:var(--shadow);transition:border-color .18s}
+.exp-card:hover{border-color:#b0c8e8}
+.exp-ico{width:46px;height:46px;border-radius:11px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px}
+.exp-info{flex:1;min-width:0}
+.exp-name{font-size:13.5px;font-weight:700;color:#1e293b}
+.exp-desc{font-size:11px;color:#64748b;margin-top:3px;line-height:1.5}
+.exp-go{flex-shrink:0;padding:9px 17px;border:none;border-radius:var(--r-sm);font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap}
+.exp-go:active{transform:scale(.96)}
+.info-card{background:#eff6ff;border:1px solid #bdd5f5;border-radius:var(--r);padding:14px 15px;font-size:12px;color:#334155;line-height:1.8;margin-bottom:16px}
+.info-card strong{display:block;font-size:12.5px;font-weight:700;color:#1558b0;margin-bottom:5px}
+
+/* ═══════════════════════════════════════════════════════════
+   EMPTY / UTILS
+═══════════════════════════════════════════════════════════ */
+.empty{text-align:center;padding:52px 20px}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty-title{font-size:15px;font-weight:700;color:#334155;margin-bottom:6px}
+.empty-sub{font-size:12.5px;color:var(--slate);line-height:1.5}
+.toast{
+  position:fixed;bottom:calc(var(--nav-h) + var(--safe-b) + 14px);
+  left:50%;transform:translateX(-50%) translateY(12px);
+  background:#1e293b;border:1px solid #334155;color:#f1f5f9;
+  padding:12px 20px;border-radius:var(--r);font-size:12.5px;font-weight:600;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);opacity:0;
+  transition:all .3s cubic-bezier(.4,0,.2,1);z-index:999;
+  pointer-events:none;max-width:88vw;text-align:center;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ HEADER ══════════════════════════════════════════════ -->
+  <div class="hdr">
+    <div class="hdr-logo">
+      <!-- Sophisticated SVG: medical cross + ECG pulse mark -->
+      <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Cross arms -->
+        <rect x="11" y="3" width="4" height="20" rx="2" fill="#1244a0" opacity="0.92"/>
+        <rect x="3" y="11" width="20" height="4" rx="2" fill="#1244a0" opacity="0.92"/>
+        <!-- ECG pulse line over horizontal bar -->
+        <polyline points="3.5,13 8,13 9.5,9 11,16.5 12.5,13 22.5,13"
+          stroke="#0891b2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        <!-- Centre dot -->
+        <circle cx="13" cy="13" r="1.8" fill="#0891b2"/>
+      </svg>
+    </div>
+    <div class="hdr-text">
+      <div class="hdr-title">TB Screening Audit</div>
+      <div class="hdr-sub">PIMS Rheumatology · Islamabad</div>
+    </div>
+    <div class="hdr-chip">EULAR 2022</div>
+  </div>
+
+  <!-- ══ BANNERS ═════════════════════════════════════════════ -->
+  <div class="banner install-banner" id="installBanner">
+    <div class="install-text">
+      <strong>📲 Install App</strong>
+      <span>Works offline · No App Store needed</span>
+    </div>
+    <button class="install-cta" id="installBtn">Install</button>
+  </div>
+  <div class="banner edit-banner" id="editBanner">
+    <div class="edit-banner-text">✏️ Editing entry</div>
+    <button class="cancel-btn" onclick="cancelEdit()">✕ Cancel</button>
+  </div>
+
+  <!-- ══ SCROLL AREA ═════════════════════════════════════════ -->
+  <div class="scroll" id="scrollArea">
+
+    <!-- ╔══════════════════════════╗
+         ║       FORM PAGE          ║
+         ╚══════════════════════════╝ -->
+    <div class="page active" id="pageForm">
+    <div class="pad">
+
+      <div class="prog-card">
+        <div class="prog-row">
+          <span class="prog-lbl">Completion</span>
+          <span class="prog-pct" id="pctText">0%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="progressFill" style="width:0%"></div></div>
+        <div class="prog-steps">
+          <div class="prog-step" id="ps0"></div>
+          <div class="prog-step" id="ps1"></div>
+          <div class="prog-step" id="ps2"></div>
+          <div class="prog-step" id="ps3"></div>
+        </div>
+      </div>
+
+      <div class="err-alert" id="errAlert"><span>⚠️</span><span>Please complete all required (*) fields.</span></div>
+
+      <!-- SECTION A -->
+      <div class="sec" id="secA">
+        <div class="sec-hd" onclick="toggleSec('secA')" style="border-left-color:#1558b0;background:#f0f7ff">
+          <span class="sec-emoji">🧑‍⚕️</span>
+          <div class="sec-inf">
+            <div class="sec-name" style="color:#93c5fd">A — Patient & Drug Information</div>
+            <div class="sec-sub">Demographics · b/tsDMARD · Cohort</div>
+          </div>
+          <span class="sec-cnt" id="cntA">0/5</span>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="sec-div"></div>
+        <div class="sec-body">
+          <div class="fld">
+            <div class="fld-lbl">Collection Date <span class="req">*</span></div>
+            <div class="inp-row">
+              <input type="date" id="f_date" onchange="upd()">
+              <select id="f_cohort" onchange="upd()">
+                <option value="">Cohort…</option>
+                <option>Prospective</option><option>Retrospective</option>
+              </select>
+            </div>
+          </div>
+          <div class="fld">
+            <div class="fld-lbl">MR No. / Patient ID <span class="req">*</span></div>
+            <input type="text" id="f_mr" placeholder="e.g. PIMS-2024-00123" oninput="upd()">
+          </div>
+          <div class="fld">
+            <div class="fld-lbl">Age & Gender <span class="req">*</span></div>
+            <div class="inp-row">
+              <input type="number" id="f_age" placeholder="Age (years)" min="1" max="120" oninput="upd()">
+              <select id="f_gender" onchange="upd()">
+                <option value="">Gender…</option>
+                <option>Male</option><option>Female</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="fld">
+            <div class="fld-lbl">RA confirmed (2010 ACR/EULAR)? <span class="req">*</span></div>
+            <div class="pill-grp" id="pg_ra"></div>
+          </div>
+          <div class="fld">
+            <div class="fld-lbl">b/tsDMARD initiated <span class="req">*</span> <span class="badge-hint">tick applicable</span></div>
+            <div class="pill-grp" id="pg_drug" style="margin-bottom:9px"></div>
+            <input type="text" id="f_drug_other" placeholder="If Other — specify drug" oninput="upd()" style="display:none">
+            <input type="text" id="f_drugname" placeholder="Drug name (e.g. Adalimumab 40mg)" oninput="upd()" class="mt8" style="margin-top:8px">
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION B -->
+      <div class="sec" id="secB">
+        <div class="sec-hd" onclick="toggleSec('secB')" style="border-left-color:#0891b2;background:#f0fbff">
+          <span class="sec-emoji">🔬</span>
+          <div class="sec-inf">
+            <div class="sec-name" style="color:#0e7490">B — Pre-treatment LTBI Screening</div>
+            <div class="sec-sub">IGRA · TST · CXR · Documentation</div>
+          </div>
+          <span class="sec-cnt" id="cntB">0/7</span>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="sec-div"></div>
+        <div class="sec-body">
+          <div class="fld"><div class="fld-lbl">IGRA performed? <span class="req">*</span></div><div class="pill-grp" id="pg_igra_done"></div></div>
+          <div class="fld"><div class="fld-lbl">IGRA result</div><div class="pill-grp" id="pg_igra_res"></div></div>
+          <div class="fld"><div class="fld-lbl">TST performed? <span class="req">*</span></div><div class="pill-grp" id="pg_tst_done"></div></div>
+          <div class="fld">
+            <div class="fld-lbl">TST result</div>
+            <div class="pill-grp" id="pg_tst_res" style="margin-bottom:9px"></div>
+            <input type="number" id="f_tst_mm" placeholder="Induration (mm) — 0 if N/A" min="0" max="99" oninput="upd()">
+          </div>
+          <div class="fld"><div class="fld-lbl">CXR (PA view) performed? <span class="req">*</span></div><div class="pill-grp" id="pg_cxr_done"></div></div>
+          <div class="fld"><div class="fld-lbl">CXR result</div><div class="pill-grp" id="pg_cxr_res"></div></div>
+          <div class="fld"><div class="fld-lbl">LTBI documented in clinical record? <span class="req">*</span></div><div class="pill-grp" id="pg_ltbi_doc"></div></div>
+        </div>
+      </div>
+
+      <!-- SECTION C -->
+      <div class="sec" id="secC">
+        <div class="sec-hd" onclick="toggleSec('secC')" style="border-left-color:#b45309;background:#fffbeb">
+          <span class="sec-emoji">💊</span>
+          <div class="sec-inf">
+            <div class="sec-name" style="color:#92400e">C — LTBI Prophylaxis</div>
+            <div class="sec-sub">Complete only if LTBI detected</div>
+          </div>
+          <span class="sec-cnt" id="cntC">0/1</span>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="sec-div"></div>
+        <div class="sec-body">
+          <div class="fld">
+            <div class="fld-lbl">LTBI detected? <span class="req">*</span></div>
+            <div class="pill-grp" id="pg_ltbi_det"></div>
+          </div>
+          <div class="skip-box" id="skipBox">✅ LTBI not detected — Section C complete. Proceed to Section D.</div>
+          <div class="cond" id="ltbiBox">
+            <div class="cond-title">⚠️ LTBI Detected — complete all fields below</div>
+            <div class="fld" style="border:none;padding-top:0"><div class="fld-lbl">Prophylactic treatment prescribed?</div><div class="pill-grp" id="pg_proph"></div></div>
+            <div class="fld" style="border:none"><div class="fld-lbl">Who initiated / managed LTBI treatment?</div><div class="pill-grp" id="pg_ltbi_mgr"></div></div>
+            <div class="fld" style="border:none">
+              <div class="fld-lbl">Prophylaxis regimen</div>
+              <div class="pill-grp" id="pg_regimen" style="margin-bottom:8px"></div>
+              <input type="text" id="f_reg_other" placeholder="If Other — specify" oninput="upd()" style="display:none">
+            </div>
+            <div class="fld" style="border:none"><div class="fld-lbl">Timing of biologic initiation</div><div class="pill-grp" id="pg_timing"></div></div>
+            <div class="fld" style="border:none;padding-bottom:0"><div class="fld-lbl">Prophylaxis completed before biologic?</div><div class="pill-grp" id="pg_proph_complete"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION D -->
+      <div class="sec" id="secD">
+        <div class="sec-hd" onclick="toggleSec('secD')" style="border-left-color:#be123c;background:#fff1f2">
+          <span class="sec-emoji">📋</span>
+          <div class="sec-inf">
+            <div class="sec-name" style="color:#fda4af">D — Barriers & Compliance</div>
+            <div class="sec-sub">Audit metadata · EULAR 2022 rating</div>
+          </div>
+          <span class="sec-cnt" id="cntD">0/3</span>
+          <span class="chevron">▾</span>
+        </div>
+        <div class="sec-div"></div>
+        <div class="sec-body">
+          <div class="fld"><div class="fld-lbl">Barrier(s) identified?</div><div class="pill-grp" id="pg_barrier_id"></div></div>
+          <div class="fld">
+            <div class="fld-lbl">Barrier type <span class="badge-hint">tick all that apply</span></div>
+            <div class="pill-grp" id="pg_barriers" style="margin-bottom:8px"></div>
+            <input type="text" id="f_barrier_other" placeholder="Other barrier — specify" oninput="upd()" style="display:none">
+          </div>
+          <div class="fld"><div class="fld-lbl">Overall EULAR 2022 compliance <span class="req">*</span></div><div class="pill-grp" id="pg_compliance"></div></div>
+          <div class="fld">
+            <div class="fld-lbl">Auditor Name <span class="req">*</span></div>
+            <div class="pill-grp" id="pg_auditor" style="margin-bottom:8px"></div>
+            <input type="text" id="f_auditor" placeholder="Enter full name" oninput="upd()" style="display:none">
+          </div>
+          <div class="fld">
+            <div class="fld-lbl">Designation</div>
+            <div class="pill-grp" id="pg_desig" style="margin-bottom:8px"></div>
+            <input type="text" id="f_desig" placeholder="Enter designation" oninput="upd()" style="display:none">
+          </div>
+        </div>
+      </div>
+
+      <button class="save-btn default" id="saveBtn" onclick="saveEntry()">
+        <span id="saveBtnIcon">💾</span><span id="saveBtnTxt">Save Entry</span>
+      </button>
+      <div style="height:10px"></div>
+    </div>
+    </div>
+
+    <!-- ╔══════════════════════════╗
+         ║     DASHBOARD PAGE       ║
+         ╚══════════════════════════╝ -->
+    <div class="page" id="pageDash">
+      <div class="pad" id="dashContent"></div>
+    </div>
+
+    <!-- ╔══════════════════════════╗
+         ║      RECORDS PAGE        ║
+         ╚══════════════════════════╝ -->
+    <div class="page" id="pageRec">
+      <div class="pad" id="recContent"></div>
+    </div>
+
+    <!-- ╔══════════════════════════╗
+         ║      EXPORT PAGE         ║
+         ╚══════════════════════════╝ -->
+    <div class="page" id="pageExport">
+      <div class="pad" id="exportContent"></div>
+    </div>
+
+  </div><!-- /scroll -->
+
+  <!-- ══ BOTTOM NAV ══════════════════════════════════════════ -->
+  <nav class="bnav">
+    <button class="nb active" id="nb_form" onclick="showTab('form')">
+      <span class="nb-icon">📝</span><span class="nb-lbl">Form</span>
+    </button>
+    <button class="nb" id="nb_dash" onclick="showTab('dash')">
+      <span class="nb-icon">📊</span><span class="nb-lbl">Charts</span>
+    </button>
+    <button class="nb" id="nb_rec" onclick="showTab('rec')">
+      <span class="nb-icon">🗂️</span><span class="nb-lbl">Records</span>
+      <span class="nb-badge" id="recBadge" style="display:none">0</span>
+    </button>
+    <button class="nb" id="nb_export" onclick="showTab('export')">
+      <span class="nb-icon">⬇️</span><span class="nb-lbl">Export</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+<div class="toast" id="toast"></div>
+
+
+<script>
+'use strict';
+
+// ── STORAGE ───────────────────────────────────────────────
+const DB = 'tb_pims_v3';
+let records = JSON.parse(localStorage.getItem(DB) || '[]');
+
+// ── FORM STATE ────────────────────────────────────────────
+const R = {};   // radio values  key→value
+const C = {};   // check values  key→Set
+
+// ── PILL DEFINITIONS ──────────────────────────────────────
+const YN   = ['Yes','No'];
+const YNA  = ['Yes','No','Not available at host institution'];
+const DRUGS = ['Anti-TNF','Rituximab','Tocilizumab','Abatacept','Secukinumab','Tofacitinib','Baricitinib','Upadacitinib','Filgotinib','Other'];
+const IGRA_RES = ['Positive','Negative','Indeterminate','N/A'];
+const TST_RES  = ['Positive (≥10mm)','Negative','N/A'];
+const CXR_RES  = ['Normal','Old TB changes','Active TB changes','Not done'];
+const LTBI_DOC = ['Yes — complete','Partial','No'];
+const LTBI_MGR = ['Rheumatology Dept','Referred to ID Dept','Referred to Chest/Pulmonology','Not documented'];
+const REGIMEN  = ['INH × 9 months','INH + RIF × 3 months (3HR)','RIF × 4 months (4R)','Other'];
+const TIMING   = ['After ≥4 weeks of prophylaxis','Initiated simultaneously','Not documented'];
+const PROPH_DONE = ['Yes','No','Ongoing at time of biologic start','Not documented'];
+const BARRIERS = ['Test unavailable at host institution','Patient declined screening','Documentation failure','Financial / affordability constraints','Other'];
+const COMPLIANCE = ['✅ Fully Compliant','⚠️ Partial','❌ Non-Compliant'];
+
+const PILL_CFG = [
+  {id:'pg_ra',         key:'ra',           type:'r', color:'#1558b0', opts:YN},
+  {id:'pg_drug',       key:'drug',         type:'r', color:'#1558b0', opts:DRUGS,   other:'f_drug_other'},
+  {id:'pg_igra_done',  key:'igra_done',    type:'r', color:'#0891b2', opts:YNA},
+  {id:'pg_igra_res',   key:'igra_res',     type:'r', color:'#0891b2', opts:IGRA_RES},
+  {id:'pg_tst_done',   key:'tst_done',     type:'r', color:'#0891b2', opts:YNA},
+  {id:'pg_tst_res',    key:'tst_res',      type:'r', color:'#0891b2', opts:TST_RES},
+  {id:'pg_cxr_done',   key:'cxr_done',     type:'r', color:'#0891b2', opts:YN},
+  {id:'pg_cxr_res',    key:'cxr_res',      type:'r', color:'#0891b2', opts:CXR_RES},
+  {id:'pg_ltbi_doc',   key:'ltbi_doc',     type:'r', color:'#0891b2', opts:LTBI_DOC},
+  {id:'pg_ltbi_det',   key:'ltbi_det',     type:'r', color:'#b45309', opts:YN},
+  {id:'pg_proph',      key:'proph',        type:'r', color:'#b45309', opts:YN},
+  {id:'pg_ltbi_mgr',   key:'ltbi_mgr',     type:'r', color:'#b45309', opts:LTBI_MGR},
+  {id:'pg_regimen',    key:'regimen',      type:'r', color:'#b45309', opts:REGIMEN,  other:'f_reg_other'},
+  {id:'pg_timing',     key:'timing',       type:'r', color:'#b45309', opts:TIMING},
+  {id:'pg_proph_complete',key:'proph_done',type:'r', color:'#b45309', opts:PROPH_DONE},
+  {id:'pg_barrier_id', key:'barrier_id',   type:'r', color:'#be123c', opts:YN},
+  {id:'pg_barriers',   key:'barriers',     type:'c', color:'#be123c', opts:BARRIERS, other:'f_barrier_other'},
+  {id:'pg_compliance', key:'compliance',   type:'r', color:'#be123c', opts:COMPLIANCE},
+  {id:'pg_auditor',    key:'auditor_sel', type:'r', color:'#475569', opts:['Dr. Aliza Kanwal','Dr. Areesha Tahir','Other'], other:'f_auditor'},
+  {id:'pg_desig',      key:'desig_sel',   type:'r', color:'#475569', opts:['House Officer','Post Graduate Resident','Other'], other:'f_desig'},
+];
+
+// ── BUILD PILLS ───────────────────────────────────────────
+function buildPills() {
+  PILL_CFG.forEach(cfg => {
+    const el = document.getElementById(cfg.id);
+    if (!el) return;
+    if (cfg.type === 'r') {
+      R[cfg.key] = '';
+      el.innerHTML = cfg.opts.map(o =>
+        `<button class="pill" data-key="${cfg.key}" data-val="${o}" data-color="${cfg.color}"
+           onclick="selPill(this,'${cfg.key}','${o}','${cfg.color}'${cfg.other?`,'${cfg.other}'`:''})"
+           style="color:${cfg.color}">
+           <span class="pdot"></span>${o}
+         </button>`
+      ).join('');
+    } else {
+      C[cfg.key] = new Set();
+      el.innerHTML = cfg.opts.map(o =>
+        `<button class="chk-pill" data-key="${cfg.key}" data-val="${o}"
+           onclick="togCheck(this,'${cfg.key}','${o}'${cfg.other?`,'${cfg.other}'`:''})"
+           style="color:${cfg.color}">
+           <span class="cbox"></span>${o}
+         </button>`
+      ).join('');
+    }
+  });
+}
+
+function selPill(btn, key, val, color, otherId) {
+  R[key] = val;
+  document.querySelectorAll(`.pill[data-key="${key}"]`).forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+  if (otherId) {
+    const el = document.getElementById(otherId);
+    if (el) el.style.display = val === 'Other' ? 'block' : 'none';
+  }
+  if (key === 'ltbi_det') handleLTBI();
+  upd();
+}
+
+function togCheck(btn, key, val, otherId) {
+  C[key].has(val) ? C[key].delete(val) : C[key].add(val);
+  btn.classList.toggle('sel', C[key].has(val));
+  if (otherId) {
+    const el = document.getElementById(otherId);
+    if (el) el.style.display = C[key].has('Other') ? 'block' : 'none';
+  }
+  upd();
+}
+
+function handleLTBI() {
+  const v = R['ltbi_det'];
+  document.getElementById('ltbiBox').classList.toggle('show', v === 'Yes');
+  document.getElementById('skipBox').classList.toggle('show', v === 'No');
+}
+
+// ── PROGRESS ──────────────────────────────────────────────
+const REQ = ['mr','age','gender','ra','drug','igra_done','tst_done','cxr_done','ltbi_doc','ltbi_det','compliance','auditor'];
+
+function tv(id) { return (document.getElementById(id)?.value || '').trim(); }
+
+function filled(k) {
+  if (k==='mr')      return tv('f_mr') !== '';
+  if (k==='age')     return tv('f_age') !== '';
+  if (k==='gender')  return document.getElementById('f_gender').value !== '';
+  if (k==='auditor') { const s=R['auditor_sel']; if(!s) return false; return s==='Other' ? tv('f_auditor')!=='' : true; }
+  return R[k] !== undefined ? R[k] !== '' : false;
+}
+
+function upd() {
+  const done = REQ.filter(filled).length;
+  const pct  = Math.round(done / REQ.length * 100);
+  document.getElementById('pctText').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  // Section step indicators
+  const sA = ['mr','age','gender','ra','drug'].filter(filled).length;
+  const sB = ['igra_done','tst_done','cxr_done','ltbi_doc'].filter(filled).length +
+             (R['igra_res']?1:0)+(R['tst_res']?1:0)+(R['cxr_res']?1:0);
+  const sC = filled('ltbi_det') ? 1 : 0;
+  const sD = (R['compliance']?1:0)+(tv('f_auditor')?1:0)+(R['barrier_id']?1:0);
+
+  document.getElementById('cntA').textContent = `${sA}/5`;
+  document.getElementById('cntB').textContent = `${Math.min(sB,7)}/7`;
+  document.getElementById('cntC').textContent = `${sC}/1`;
+  document.getElementById('cntD').textContent = `${sD}/3`;
+
+  // Progress steps
+  const steps = [sA>=3, sB>=4, sC>=1, sD>=2];
+  steps.forEach((done, i) => {
+    const el = document.getElementById('ps'+i);
+    el.className = 'progress-step' + (done ? ' done' : (i===steps.findIndex(s=>!s) ? ' active' : ''));
+  });
+}
+
+// ── SECTION TOGGLE ────────────────────────────────────────
+function toggleSec(id) { document.getElementById(id).classList.toggle('collapsed'); }
+
+// ── VALIDATE & SAVE ───────────────────────────────────────
+function saveEntry() {
+  // Validate required
+  const missing = REQ.some(k => !filled(k));
+  if (missing) {
+    document.getElementById('errAlert').classList.add('show');
+    document.getElementById('scrollArea').scrollTo({top:0,behavior:'smooth'});
+    // Highlight empties
+    if (!tv('f_mr'))      document.getElementById('f_mr').classList.add('error');
+    if (!tv('f_age'))     document.getElementById('f_age').classList.add('error');
+    if (!document.getElementById('f_gender').value) document.getElementById('f_gender').classList.add('error');
+    // auditor validation via pill
+    return;
+  }
+  document.getElementById('errAlert').classList.remove('show');
+  ['f_mr','f_age','f_gender'].forEach(id => document.getElementById(id)?.classList.remove('error'));
+
+  const entry = {
+    id: editId || Date.now(),
+    savedAt: new Date().toISOString(),
+    // Section A
+    date: tv('f_date'),
+    cohort: document.getElementById('f_cohort').value,
+    mr: tv('f_mr'),
+    age: tv('f_age'),
+    gender: document.getElementById('f_gender').value,
+    drug_name: tv('f_drugname'),
+    drug_other: tv('f_drug_other'),
+    // Section B
+    tst_mm: tv('f_tst_mm'),
+    // Section C
+    reg_other: tv('f_reg_other'),
+    // Section D
+    barrier_other: tv('f_barrier_other'),
+    auditor: R['auditor_sel']==='Other' ? tv('f_auditor') : R['auditor_sel'],
+    desig: R['desig_sel']==='Other' ? tv('f_desig') : R['desig_sel'],
+    // All radio values
+    ...Object.fromEntries(Object.entries(R).map(([k,v]) => [k,v])),
+    // All check values
+    barriers: [...(C['barriers'] || [])],
+  };
+
+  if (editId) {
+    records = records.map(r => r.id === editId ? entry : r);
+    showToast('✅ Entry updated successfully');
+  } else {
+    records = [entry, ...records];
+    showToast('✅ Entry saved!');
+  }
+  persist();
+  clearForm();
+  setTimeout(() => showTab('rec'), 700);
+}
+
+function persist() {
+  localStorage.setItem(DB, JSON.stringify(records));
+  const b = document.getElementById('recBadge');
+  b.textContent = records.length;
+  b.style.display = records.length ? 'flex' : 'none';
+}
+
+// ── CLEAR ─────────────────────────────────────────────────
+let editId = null;
+
+function clearForm() {
+  ['f_mr','f_drugname','f_drug_other','f_tst_mm','f_auditor','f_desig','f_reg_other','f_barrier_other'].forEach(id => {
+    const el = document.getElementById(id); if(el){ el.value=''; el.style.display='none'; el.classList.remove('error'); }
+  });
+  // Reset drug name to always visible
+  document.getElementById('f_drugname').style.display = '';
+  document.getElementById('f_age').value = '';
+  document.getElementById('f_age').classList.remove('error');
+  document.getElementById('f_gender').value = '';
+  document.getElementById('f_gender').classList.remove('error');
+  document.getElementById('f_date').valueAsDate = new Date();
+  document.getElementById('f_cohort').value = '';
+  PILL_CFG.forEach(cfg => {
+    if (cfg.type==='r') R[cfg.key]=''; else C[cfg.key]=new Set();
+    document.querySelectorAll(`#${cfg.id} .pill,#${cfg.id} .check-pill`).forEach(b=>b.classList.remove('sel'));
+  });
+  document.getElementById('ltbiBox').classList.remove('show');
+  document.getElementById('skipBox').classList.remove('show');
+  document.getElementById('errAlert').classList.remove('show');
+  editId = null;
+  document.getElementById('editBanner').classList.remove('show');
+  document.getElementById('saveBtn').className = 'save-btn default';
+  document.getElementById('saveBtnIcon').textContent = '💾';
+  document.getElementById('saveBtnTxt').textContent = 'Save Entry';
+  upd();
+}
+
+function cancelEdit() { clearForm(); showTab('form'); }
+
+// ── EDIT ──────────────────────────────────────────────────
+function editRecord(id) {
+  const e = records.find(r => r.id === id);
+  if (!e) return;
+  clearForm();
+  editId = id;
+
+  document.getElementById('f_date').value    = e.date || '';
+  document.getElementById('f_cohort').value  = e.cohort || '';
+  document.getElementById('f_mr').value      = e.mr || '';
+  document.getElementById('f_age').value     = e.age || '';
+  document.getElementById('f_gender').value  = e.gender || '';
+  document.getElementById('f_drugname').value= e.drug_name || '';
+  document.getElementById('f_tst_mm').value  = e.tst_mm || '';
+  // Restore auditor pill
+  const knownAuditors = ['Dr. Aliza Kanwal','Dr. Areesha Tahir'];
+  if (knownAuditors.includes(e.auditor)) {
+    R['auditor_sel'] = e.auditor;
+    document.querySelectorAll('#pg_auditor .pill').forEach(b => { if(b.dataset.val===e.auditor) b.classList.add('sel'); });
+    document.getElementById('f_auditor').style.display = 'none';
+  } else if (e.auditor) {
+    R['auditor_sel'] = 'Other';
+    document.querySelectorAll('#pg_auditor .pill').forEach(b => { if(b.dataset.val==='Other') b.classList.add('sel'); });
+    document.getElementById('f_auditor').style.display = 'block';
+    document.getElementById('f_auditor').value = e.auditor;
+  }
+  // Restore designation pill
+  const knownDesig = ['House Officer','Post Graduate Resident'];
+  if (knownDesig.includes(e.desig)) {
+    R['desig_sel'] = e.desig;
+    document.querySelectorAll('#pg_desig .pill').forEach(b => { if(b.dataset.val===e.desig) b.classList.add('sel'); });
+    document.getElementById('f_desig').style.display = 'none';
+  } else if (e.desig) {
+    R['desig_sel'] = 'Other';
+    document.querySelectorAll('#pg_desig .pill').forEach(b => { if(b.dataset.val==='Other') b.classList.add('sel'); });
+    document.getElementById('f_desig').style.display = 'block';
+    document.getElementById('f_desig').value = e.desig;
+  }
+
+  PILL_CFG.forEach(cfg => {
+    if (cfg.type==='r' && e[cfg.key]) {
+      R[cfg.key] = e[cfg.key];
+      document.querySelectorAll(`#${cfg.id} .pill`).forEach(b => {
+        if (b.dataset.val === e[cfg.key]) {
+          b.classList.add('sel');
+          if (cfg.other && e[cfg.key]==='Other') {
+            const el = document.getElementById(cfg.other);
+            if (el) { el.style.display='block'; el.value = e[cfg.other.replace('f_','').replace('_other','')+'_other'] || e.reg_other || e.drug_other || ''; }
+          }
+        }
+      });
+    } else if (cfg.type==='c') {
+      const vals = Array.isArray(e[cfg.key]) ? e[cfg.key] : [];
+      C[cfg.key] = new Set(vals);
+      document.querySelectorAll(`#${cfg.id} .check-pill`).forEach(b => {
+        if (vals.includes(b.dataset.val)) b.classList.add('sel');
+      });
+      if (cfg.other && vals.includes('Other')) {
+        const el = document.getElementById(cfg.other);
+        if (el) { el.style.display='block'; el.value = e.barrier_other || ''; }
+      }
+    }
+  });
+
+  handleLTBI();
+  document.getElementById('editBanner').classList.add('show');
+  document.getElementById('saveBtn').className = 'save-btn editing';
+  document.getElementById('saveBtnIcon').textContent = '✏️';
+  document.getElementById('saveBtnTxt').textContent = 'Update Entry';
+  upd();
+  showTab('form');
+  document.getElementById('scrollArea').scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── DELETE ────────────────────────────────────────────────
+function deleteRecord(id) {
+  if (!confirm('Delete this record? This cannot be undone.')) return;
+  records = records.filter(r => r.id !== id);
+  persist();
+  renderRecords();
+  renderDash();
+  showToast('🗑 Record deleted');
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────
+function renderDash() {
+  const el = document.getElementById('dashContent');
+  const n = records.length;
+  if (!n) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">No data yet</div><div class="empty-sub">Save your first entry to see the full analysis dashboard.</div></div>`;
+    return;
+  }
+
+  // ── Core counts ────────────────────────────────────────────
+  const fc    = records.filter(r=>r.compliance?.includes('Fully')).length;
+  const pt    = records.filter(r=>r.compliance?.includes('Partial')).length;
+  const nc    = records.filter(r=>r.compliance?.includes('Non')).length;
+  const igra  = records.filter(r=>r.igra_done==='Yes').length;
+  const igraN = records.filter(r=>r.igra_done==='No').length;
+  const igraNA= records.filter(r=>r.igra_done==='Not available at host institution').length;
+  const tst   = records.filter(r=>r.tst_done==='Yes').length;
+  const cxr   = records.filter(r=>r.cxr_done==='Yes').length;
+  const ltbi  = records.filter(r=>r.ltbi_det==='Yes').length;
+  const proph = records.filter(r=>r.proph==='Yes').length;
+  const prophDone = records.filter(r=>r.proph_done==='Yes').length;
+  const ltbiFc= records.filter(r=>r.ltbi_doc==='Yes - complete').length;
+  const pros  = records.filter(r=>r.cohort==='Prospective').length;
+  const retro = records.filter(r=>r.cohort==='Retrospective').length;
+  const raY   = records.filter(r=>r.ra==='Yes').length;
+  const pct   = v => n ? Math.round(v/n*100) : 0;
+  const pctOf = (v,d) => d ? Math.round(v/d*100) : 0;
+
+  // ── Age stats ──────────────────────────────────────────────
+  const ages = records.map(r=>parseFloat(r.age)).filter(a=>!isNaN(a)&&a>0);
+  const meanAge = ages.length ? (ages.reduce((a,b)=>a+b,0)/ages.length).toFixed(1) : '—';
+  const minAge  = ages.length ? Math.min(...ages) : '—';
+  const maxAge  = ages.length ? Math.max(...ages) : '—';
+
+  // ── Gender ────────────────────────────────────────────────
+  const male  = records.filter(r=>r.gender==='Male').length;
+  const female= records.filter(r=>r.gender==='Female').length;
+
+  // ── Drug counts ───────────────────────────────────────────
+  const drugCounts = {};
+  records.forEach(r=>{ if(r.drug) drugCounts[r.drug]=(drugCounts[r.drug]||0)+1; });
+  const topDrugs = Object.entries(drugCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  // ── IGRA / TST / CXR results breakdown ───────────────────
+  const igraPos = records.filter(r=>r.igra_res==='Positive').length;
+  const igraNeg = records.filter(r=>r.igra_res==='Negative').length;
+  const igraInd = records.filter(r=>r.igra_res==='Indeterminate').length;
+  const tstPos  = records.filter(r=>r.tst_res==='Positive (>=10mm)').length;
+  const tstNeg  = records.filter(r=>r.tst_res==='Negative').length;
+  const cxrNorm = records.filter(r=>r.cxr_res==='Normal').length;
+  const cxrOld  = records.filter(r=>r.cxr_res==='Old TB changes').length;
+  const cxrAct  = records.filter(r=>r.cxr_res==='Active TB changes').length;
+
+  // ── Auditor ───────────────────────────────────────────────
+  const auditorCounts = {};
+  records.forEach(r=>{ if(r.auditor) auditorCounts[r.auditor]=(auditorCounts[r.auditor]||0)+1; });
+
+  // ── Barriers ─────────────────────────────────────────────
+  const barrierCounts = {};
+  records.forEach(r=>{
+    (r.barriers||[]).forEach(b=>{ barrierCounts[b]=(barrierCounts[b]||0)+1; });
+  });
+  const topBarriers = Object.entries(barrierCounts).sort((a,b)=>b[1]-a[1]);
+
+  // ── Compliance % bar segments ────────────────────────────
+  const fcW = n ? (fc/n*100).toFixed(1) : 0;
+  const ptW = n ? (pt/n*100).toFixed(1) : 0;
+  const ncW = n ? (nc/n*100).toFixed(1) : 0;
+
+  el.innerHTML = `
+    <!-- ══ KPI ROW 1 ══ -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-n" style="color:var(--navy)">${n}</div>
+        <div class="kpi-l">Total<br>Entries</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-n" style="color:var(--green)">${pct(fc)}%</div>
+        <div class="kpi-l">Fully<br>Compliant</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-n" style="color:var(--teal)">${meanAge}</div>
+        <div class="kpi-l">Mean Age<br>(years)</div>
+      </div>
+    </div>
+
+    <!-- ══ KPI ROW 2 ══ -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-n" style="color:var(--blue)">${pct(igra)}%</div>
+        <div class="kpi-l">IGRA<br>Rate</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-n" style="color:var(--purple)">${pct(cxr)}%</div>
+        <div class="kpi-l">CXR<br>Rate</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-n" style="color:var(--amber)">${pct(ltbi)}%</div>
+        <div class="kpi-l">LTBI<br>Prevalence</div>
+      </div>
+    </div>
+
+    <!-- ══ COMPLIANCE STACKED BAR ══ -->
+    <div class="sec-sep">📊 EULAR 2022 Compliance</div>
+    <div class="chart-card" style="padding-bottom:18px">
+      <div class="donut-wrap">
+        <canvas id="cvCompliance" class="donut-canvas" width="130" height="130"></canvas>
+        <div class="donut-leg">
+          <div class="leg-row"><div class="leg-dot" style="background:#15803d"></div><span class="leg-lbl">Fully Compliant</span><span class="leg-val" style="color:#15803d">${fc} <span style="font-weight:400;color:var(--slate2)">(${pct(fc)}%)</span></span></div>
+          <div class="leg-row"><div class="leg-dot" style="background:#c27d11"></div><span class="leg-lbl">Partial</span><span class="leg-val" style="color:#c27d11">${pt} <span style="font-weight:400;color:var(--slate2)">(${pct(pt)}%)</span></span></div>
+          <div class="leg-row"><div class="leg-dot" style="background:#c81a1a"></div><span class="leg-lbl">Non-Compliant</span><span class="leg-val" style="color:#c81a1a">${nc} <span style="font-weight:400;color:var(--slate2)">(${pct(nc)}%)</span></span></div>
+          <div class="leg-row" style="border-top:1px solid var(--border2);padding-top:6px;margin-top:2px">
+            <div class="leg-dot" style="background:var(--navy)"></div><span class="leg-lbl">Total</span><span class="leg-val">${n}</span>
+          </div>
+        </div>
+      </div>
+      <div class="comp-bar" style="margin-top:12px">
+        <div class="comp-seg" style="width:${fcW}%;background:#15803d"></div>
+        <div class="comp-seg" style="width:${ptW}%;background:#c27d11"></div>
+        <div class="comp-seg" style="width:${ncW}%;background:#c81a1a"></div>
+      </div>
+    </div>
+
+    <!-- ══ SCREENING RATES ══ -->
+    <div class="sec-sep">🎯 EULAR 2022 Screening Rates</div>
+    <div class="chart-card">
+      <div class="chart-wrap"><canvas id="cvScreening" class="chart-canvas" height="170"></canvas></div>
+    </div>
+
+    <!-- ══ DEMOGRAPHICS ══ -->
+    <div class="sec-sep">👥 Demographics</div>
+    <div class="two-col">
+      <div class="chart-card" style="margin-bottom:0">
+        <div class="chart-title" style="font-size:12px">Gender</div>
+        <div class="donut-wrap" style="gap:10px">
+          <canvas id="cvGender" class="donut-canvas" width="90" height="90"></canvas>
+          <div class="donut-leg">
+            <div class="leg-row"><div class="leg-dot" style="background:#1a5fc8"></div><span class="leg-lbl" style="font-size:11px">Male</span><span class="leg-val" style="font-size:11px">${male}</span></div>
+            <div class="leg-row"><div class="leg-dot" style="background:#c0185d"></div><span class="leg-lbl" style="font-size:11px">Female</span><span class="leg-val" style="font-size:11px">${female}</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0">
+        <div class="chart-title" style="font-size:12px">Cohort</div>
+        <div class="donut-wrap" style="gap:10px">
+          <canvas id="cvCohort" class="donut-canvas" width="90" height="90"></canvas>
+          <div class="donut-leg">
+            <div class="leg-row"><div class="leg-dot" style="background:#059682"></div><span class="leg-lbl" style="font-size:11px">Prospective</span><span class="leg-val" style="font-size:11px">${pros}</span></div>
+            <div class="leg-row"><div class="leg-dot" style="background:#6d28d9"></div><span class="leg-lbl" style="font-size:11px">Retrospective</span><span class="leg-val" style="font-size:11px">${retro}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px"></div>
+
+    <!-- ══ DRUG DISTRIBUTION ══ -->
+    <div class="sec-sep">💊 Drug Class Distribution</div>
+    <div class="chart-card">
+      <div class="chart-wrap"><canvas id="cvDrugs" class="chart-canvas" height="200"></canvas></div>
+    </div>
+
+    <!-- ══ IGRA & TST RESULTS ══ -->
+    <div class="sec-sep">🔬 Test Results Breakdown</div>
+    <div class="two-col">
+      <div class="chart-card" style="margin-bottom:0">
+        <div class="chart-title" style="font-size:12px">IGRA Results</div>
+        <div style="text-align:center"><canvas id="cvIGRA" class="donut-canvas" width="100" height="100" style="display:inline-block"></canvas></div>
+        <div class="donut-leg" style="margin-top:8px">
+          ${[['Positive','#c81a1a',igraPos],['Negative','#15803d',igraNeg],['Indeterminate','#c27d11',igraInd],['N/A','#94a3b8',records.filter(r=>r.igra_res==='N/A').length]].map(([l,c,v])=>
+            `<div class="leg-row"><div class="leg-dot" style="background:${c}"></div><span class="leg-lbl" style="font-size:11px">${l}</span><span class="leg-val" style="font-size:11px;color:${c}">${v}</span></div>`
+          ).join('')}
+        </div>
+      </div>
+      <div class="chart-card" style="margin-bottom:0">
+        <div class="chart-title" style="font-size:12px">CXR Results</div>
+        <div style="text-align:center"><canvas id="cvCXR" class="donut-canvas" width="100" height="100" style="display:inline-block"></canvas></div>
+        <div class="donut-leg" style="margin-top:8px">
+          ${[['Normal','#15803d',cxrNorm],['Old TB','#c27d11',cxrOld],['Active TB','#c81a1a',cxrAct],['Not done','#94a3b8',records.filter(r=>r.cxr_res==='Not done').length]].map(([l,c,v])=>
+            `<div class="leg-row"><div class="leg-dot" style="background:${c}"></div><span class="leg-lbl" style="font-size:11px">${l}</span><span class="leg-val" style="font-size:11px;color:${c}">${v}</span></div>`
+          ).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px"></div>
+
+    <!-- ══ FREQUENCY TABLE ══ -->
+    <div class="sec-sep">📋 Frequency Table</div>
+    <div class="chart-card" style="padding:0;overflow:hidden">
+      <table class="ftable">
+        <tr><th colspan="3">Variable</th></tr>
+        <tr><td><b>RA Confirmed</b></td><td>${raY}</td><td>${pct(raY)}%</td></tr>
+        <tr><td><b>IGRA Done</b></td><td>${igra}</td><td>${pct(igra)}%</td></tr>
+        <tr><td>&nbsp;&nbsp;IGRA Positive</td><td>${igraPos}</td><td>${pctOf(igraPos,igra)}% of done</td></tr>
+        <tr><td>&nbsp;&nbsp;IGRA Negative</td><td>${igraNeg}</td><td>${pctOf(igraNeg,igra)}% of done</td></tr>
+        <tr><td>&nbsp;&nbsp;Indeterminate</td><td>${igraInd}</td><td>${pctOf(igraInd,igra)}% of done</td></tr>
+        <tr><td><b>TST Done</b></td><td>${tst}</td><td>${pct(tst)}%</td></tr>
+        <tr><td>&nbsp;&nbsp;TST Positive</td><td>${tstPos}</td><td>${pctOf(tstPos,tst)}% of done</td></tr>
+        <tr><td>&nbsp;&nbsp;TST Negative</td><td>${tstNeg}</td><td>${pctOf(tstNeg,tst)}% of done</td></tr>
+        <tr><td><b>CXR Done</b></td><td>${cxr}</td><td>${pct(cxr)}%</td></tr>
+        <tr><td>&nbsp;&nbsp;Normal</td><td>${cxrNorm}</td><td>${pctOf(cxrNorm,cxr)}% of done</td></tr>
+        <tr><td>&nbsp;&nbsp;Old TB changes</td><td>${cxrOld}</td><td>${pctOf(cxrOld,cxr)}% of done</td></tr>
+        <tr><td>&nbsp;&nbsp;Active TB changes</td><td>${cxrAct}</td><td>${pctOf(cxrAct,cxr)}% of done</td></tr>
+        <tr><td><b>LTBI Documented (Complete)</b></td><td>${ltbiFc}</td><td>${pct(ltbiFc)}%</td></tr>
+        <tr><td><b>LTBI Detected</b></td><td>${ltbi}</td><td>${pct(ltbi)}%</td></tr>
+        <tr><td><b>Prophylaxis Prescribed</b></td><td>${proph}</td><td>${pctOf(proph,ltbi)}% of LTBI+</td></tr>
+        <tr><td><b>Prophylaxis Completed</b></td><td>${prophDone}</td><td>${pctOf(prophDone,proph)}% of prescribed</td></tr>
+        <tr><td><b>Barrier Identified</b></td><td>${records.filter(r=>r.barrier_id==='Yes').length}</td><td>${pct(records.filter(r=>r.barrier_id==='Yes').length)}%</td></tr>
+      </table>
+    </div>
+
+    <!-- ══ BARRIERS ══ -->
+    ${topBarriers.length ? `
+    <div class="sec-sep">🚧 Barriers to Screening</div>
+    <div class="chart-card">
+      <div class="chart-wrap"><canvas id="cvBarriers" class="chart-canvas" height="140"></canvas></div>
+    </div>` : ''}
+
+    <!-- ══ AUDITOR WORKLOAD ══ -->
+    <div class="sec-sep">👤 Entries by Auditor</div>
+    <div class="chart-card">
+      <div class="chart-wrap"><canvas id="cvAuditor" class="chart-canvas" height="100"></canvas></div>
+    </div>
+
+    <!-- ══ AGE STATS ══ -->
+    <div class="sec-sep">📐 Age Statistics</div>
+    <div class="kpi-row" style="margin-bottom:14px">
+      <div class="kpi"><div class="kpi-n" style="color:var(--navy)">${meanAge}</div><div class="kpi-l">Mean<br>Age</div></div>
+      <div class="kpi"><div class="kpi-n" style="color:var(--teal)">${minAge}</div><div class="kpi-l">Min<br>Age</div></div>
+      <div class="kpi"><div class="kpi-n" style="color:var(--rose)">${maxAge}</div><div class="kpi-l">Max<br>Age</div></div>
+    </div>
+
+    <button class="export-btn" onclick="showTab('export')">⬇️ Export Data (Excel · CSV · SPSS)</button>
+  `;
+
+  requestAnimationFrame(() => {
+    // Compliance donut
+    drawDonut('cvCompliance', [fc,pt,nc,Math.max(0,n-fc-pt-nc)], ['#15803d','#c27d11','#c81a1a','#e2e8f0']);
+    // Screening rates
+    drawBarH('cvScreening',
+      ['IGRA Performed','TST Performed','CXR Done','LTBI Documented','Fully Compliant'],
+      [pct(igra), pct(tst), pct(cxr), pct(ltbiFc), pct(fc)],
+      ['#059682','#1a5fc8','#6d28d9','#0ea5e9','#15803d'], '%'
+    );
+    // Gender
+    drawDonut2('cvGender', [male,female,Math.max(0,n-male-female)], ['#1a5fc8','#c0185d','#e2e8f0'], 90);
+    // Cohort
+    drawDonut2('cvCohort', [pros,retro,Math.max(0,n-pros-retro)], ['#059682','#6d28d9','#e2e8f0'], 90);
+    // Drug distribution
+    if (topDrugs.length) drawBarH('cvDrugs', topDrugs.map(d=>d[0]), topDrugs.map(d=>d[1]),
+      ['#1a5fc8','#059682','#c27d11','#c0185d','#6d28d9','#0ea5e9','#c81a1a','#15803d'], ' pts');
+    // IGRA results
+    drawDonut2('cvIGRA', [igraPos,igraNeg,igraInd,records.filter(r=>r.igra_res==='N/A').length],
+      ['#c81a1a','#15803d','#c27d11','#94a3b8'], 100);
+    // CXR results
+    drawDonut2('cvCXR', [cxrNorm,cxrOld,cxrAct,records.filter(r=>r.cxr_res==='Not done').length],
+      ['#15803d','#c27d11','#c81a1a','#94a3b8'], 100);
+    // Barriers
+    if (topBarriers.length && document.getElementById('cvBarriers')) {
+      drawBarH('cvBarriers', topBarriers.map(b=>b[0]), topBarriers.map(b=>b[1]),
+        ['#c81a1a','#c27d11','#6d28d9','#1a5fc8','#059682'], ' cases');
+    }
+    // Auditor
+    const auditorLabels = Object.keys(auditorCounts);
+    const auditorVals   = auditorLabels.map(k=>auditorCounts[k]);
+    if (auditorLabels.length) drawBarH('cvAuditor', auditorLabels, auditorVals,
+      ['#0a1628','#1a5fc8','#059682','#c27d11'], ' entries');
+  });
+}
+
+// ── DONUT VARIANT FOR SMALL SIZE ────────────────────────────
+function drawDonut2(canvasId, values, colors, size) {
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const dpr = window.devicePixelRatio || 1;
+  const S = size || 130;
+  cv.width  = S * dpr; cv.height = S * dpr;
+  cv.style.width = S+'px'; cv.style.height = S+'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const total = values.reduce((a,b)=>a+b,0) || 1;
+  const cx = S/2, cy = S/2;
+  const R = S * (S<=100 ? 0.44 : 0.42);
+  const r = S * (S<=100 ? 0.26 : 0.24);
+  let start = -Math.PI/2;
+  values.forEach((v,i) => {
+    if (!v) return;
+    const sweep = (v/total)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,R,start,start+sweep);
+    ctx.closePath();
+    ctx.fillStyle = colors[i%colors.length]; ctx.fill();
+    start += sweep;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fillStyle='#ffffff'; ctx.fill();
+  // Centre %
+  const mainPct = Math.round(values[0]/total*100);
+  ctx.fillStyle='#0a1628';
+  ctx.font = `800 ${S<=100?13:18}px 'JetBrains Mono',monospace`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(mainPct+'%', cx, cy);
+}
+
+// ── CANVAS CHART HELPERS ──────────────────────────────────────
+function drawBarH(canvasId, labels, values, colors, suffix) {
+  const cv = document.getElementById(canvasId);
+  if (!cv || !labels.length) return;
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.offsetWidth || cv.parentElement.offsetWidth || 300;
+  const barH = 28, gap = 10, padL = 110, padR = 50, padT = 10, padB = 16;
+  const H = labels.length * (barH + gap) + padT + padB;
+  cv.width  = W * dpr;
+  cv.height = H * dpr;
+  cv.style.width  = W + 'px';
+  cv.style.height = H + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const maxVal = Math.max(...values, 1);
+  const availW = W - padL - padR;
+
+  labels.forEach((lbl, i) => {
+    const y = padT + i * (barH + gap);
+    const val = values[i] || 0;
+    const bw  = (val / maxVal) * availW;
+    const col = colors[i % colors.length];
+
+    // Background track
+    ctx.fillStyle = '#f1f5f9';
+    roundRect(ctx, padL, y, availW, barH, 5);
+    ctx.fill();
+
+    // Bar
+    if (bw > 0) {
+      ctx.fillStyle = col;
+      roundRect(ctx, padL, y, Math.max(bw, 6), barH, 5);
+      ctx.fill();
+    }
+
+    // Label (left)
+    ctx.fillStyle = '#334155';
+    ctx.font = `500 11px 'Plus Jakarta Sans', sans-serif`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(lbl.length > 14 ? lbl.slice(0,13)+'…' : lbl, padL - 8, y + barH/2);
+
+    // Value (right)
+    ctx.fillStyle = col;
+    ctx.font = `700 11px 'JetBrains Mono', monospace`;
+    ctx.textAlign = 'left';
+    ctx.fillText(val + (suffix||''), padL + availW + 6, y + barH/2);
+  });
+}
+
+function drawDonut(canvasId, values, colors) {
+  const cv = document.getElementById(canvasId);
+  if (!cv) return;
+  const dpr = window.devicePixelRatio || 1;
+  const S = 130;
+  cv.width  = S * dpr;
+  cv.height = S * dpr;
+  cv.style.width  = S + 'px';
+  cv.style.height = S + 'px';
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+
+  const total = values.reduce((a,b)=>a+b, 0) || 1;
+  const cx = S/2, cy = S/2, R = S*0.42, r = S*0.24;
+  let start = -Math.PI/2;
+
+  values.forEach((v, i) => {
+    if (!v) return;
+    const sweep = (v / total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R, start, start + sweep);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+    start += sweep;
+  });
+
+  // Hole
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+
+  // Centre text
+  const main = values[0];
+  const pctVal = Math.round(main/total*100);
+  ctx.fillStyle = '#0a1628';
+  ctx.font = `800 18px 'JetBrains Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(pctVal + '%', cx, cy);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+  ctx.lineTo(x+w, y+h-r);
+  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+  ctx.lineTo(x+r, y+h);
+  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+  ctx.lineTo(x, y+r);
+  ctx.quadraticCurveTo(x, y, x+r, y);
+  ctx.closePath();
+}
+
+// bar() helper removed — using canvas charts
+
+// ── RECORDS ───────────────────────────────────────────────
+function renderRecords() {
+  const el = document.getElementById('recContent');
+  if (!records.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">🗂️</div><div class="empty-title">No records yet</div><div class="empty-sub">Completed audit forms will appear here.</div></div>`;
+    return;
+  }
+  const cls = c => c?.includes('Fully')?'fc':c?.includes('Partial')?'pt':c?.includes('Non')?'nc':'';
+  const tag = (l,bg,c) => `<span class="etag" style="background:${bg};color:${c}">${l}</span>`;
+
+  el.innerHTML = `
+    <div class="rec-tb">
+      <div class="rec-title">Records (${records.length})</div>
+      <button class="rec-exp" onclick="showTab('export')">⬇️ Export</button>
+    </div>
+    ${records.map(r => `
+      <div class="entry-card ${cls(r.compliance)}">
+        <div class="entry-top">
+          <div style="min-width:0">
+            <div class="entry-mr">${r.mr || '—'}</div>
+            <div class="entry-meta">
+              ${r.date || '—'} · ${r.age||'?'}y ${r.gender||''}<br>
+              ${r.drug||''} ${r.drug_name ? '· '+r.drug_name : ''} ${r.cohort ? '· '+r.cohort : ''}
+            </div>
+          </div>
+          <div class="entry-acts">
+            <button class="act act-edit" onclick="editRecord(${r.id})">Edit</button>
+            <button class="act act-del"  onclick="deleteRecord(${r.id})">Del</button>
+          </div>
+        </div>
+        <div class="entry-tags">
+          ${r.compliance?.includes('Fully') ? tag('✅ Fully Compliant','#dcfce7','#15803d') : ''}
+          ${r.compliance?.includes('Partial') ? tag('⚠️ Partial','#fef3c7','#c27d11') : ''}
+          ${r.compliance?.includes('Non') ? tag('❌ Non-Compliant','#fee2e2','#c81a1a') : ''}
+          ${r.ltbi_det==='Yes' ? tag('LTBI+','#fef3c7','#c27d11') : ''}
+          ${r.igra_done==='Yes' ? tag('IGRA ✓','#d0faf4','#059682') : ''}
+          ${r.cxr_done==='Yes' ? tag('CXR ✓','#dbeafe','#1244a0') : ''}
+          ${r.proph==='Yes' ? tag('Proph ✓','#ede9fe','#6d28d9') : ''}
+          <span class="entry-aud">${r.auditor||''} ${r.desig ? '· '+r.desig : ''}</span>
+        </div>
+      </div>
+    `).join('')}
+  `;
+}
+
+// ── CSV EXPORT ────────────────────────────────────────────
+// ── DATA ROWS HELPER ────────────────────────────────────────
+function getRows() {
+  return records.map(r => ({
+    Serial_No:           records.indexOf(r)+1,
+    MR_No:               r.mr||'',
+    Date:                r.date||'',
+    Cohort:              r.cohort||'',
+    Age:                 r.age ? Number(r.age) : '',
+    Gender:              r.gender||'',
+    RA_Confirmed:        r.ra||'',
+    Drug_Class:          r.drug||'',
+    Drug_Name:           r.drug_name||'',
+    IGRA_Done:           r.igra_done||'',
+    IGRA_Result:         r.igra_res||'',
+    TST_Done:            r.tst_done||'',
+    TST_Result:          r.tst_res||'',
+    TST_Induration_mm:   r.tst_mm ? Number(r.tst_mm) : '',
+    CXR_Done:            r.cxr_done||'',
+    CXR_Result:          r.cxr_res||'',
+    LTBI_Documented:     r.ltbi_doc||'',
+    LTBI_Detected:       r.ltbi_det||'',
+    Prophylaxis_Given:   r.proph||'',
+    LTBI_Manager:        r.ltbi_mgr||'',
+    Regimen:             r.regimen||'',
+    Biologic_Timing:     r.timing||'',
+    Prophylaxis_Complete:r.proph_done||'',
+    Barrier_Identified:  r.barrier_id||'',
+    Barrier_Types:       (r.barriers||[]).join('|'),
+    EULAR_Compliance:    r.compliance||'',
+    Auditor:             r.auditor||'',
+    Designation:         r.desig||'',
+    Saved_At:            r.savedAt||''
+  }));
+}
+
+// ── CSV EXPORT ───────────────────────────────────────────────
+function exportCSV() {
+  if (!records.length) { showToast('⚠️ No records to export'); return; }
+  const rows = getRows();
+  const H = Object.keys(rows[0]);
+  const lines = [H.join(','), ...rows.map(r => H.map(k => `"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(','))];
+  const blob = new Blob([lines.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `TB_Audit_PIMS_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  showToast('📥 CSV exported!');
+}
+
+// ── EXCEL EXPORT (SPSS-READY .xlsx) ──────────────────────────
+function exportExcel() {
+  if (!records.length) { showToast('⚠️ No records to export'); return; }
+  if (typeof XLSX === 'undefined') { showToast('⚠️ Excel library not loaded. Check internet connection.'); return; }
+
+  const wb = XLSX.utils.book_new();
+  const rows = getRows();
+
+  // ── Sheet 1: Data Entry ──────────────────────────────────
+  const ws1 = XLSX.utils.json_to_sheet(rows);
+
+  // Column widths
+  ws1['!cols'] = [
+    {wch:8},{wch:16},{wch:14},{wch:14},{wch:7},{wch:9},{wch:10},{wch:13},{wch:18},
+    {wch:12},{wch:12},{wch:12},{wch:14},{wch:12},{wch:10},{wch:16},{wch:16},
+    {wch:12},{wch:12},{wch:22},{wch:20},{wch:20},{wch:20},{wch:12},{wch:22},
+    {wch:18},{wch:22},{wch:22},{wch:20}
+  ];
+  XLSX.utils.book_append_sheet(wb, ws1, 'Data Entry');
+
+  // ── Sheet 2: SPSS Codebook ───────────────────────────────
+  const cbData = [
+    {Variable:'Serial_No',       Label:'Serial Number',                     Type:'Numeric',  Values:'Auto 1–200',                                    Notes:''},
+    {Variable:'MR_No',           Label:'Patient ID',                        Type:'String',   Values:'Free text',                                     Notes:'De-identify before sharing'},
+    {Variable:'Date',            Label:'Date of Collection',                Type:'Date',     Values:'DD/MM/YYYY',                                    Notes:''},
+    {Variable:'Cohort',          Label:'Cohort Type',                       Type:'String',   Values:'Prospective | Retrospective',                   Notes:''},
+    {Variable:'Age',             Label:'Age (Years)',                       Type:'Numeric',  Values:'Continuous',                                    Notes:''},
+    {Variable:'Gender',          Label:'Gender',                            Type:'String',   Values:'Male | Female | Other',                         Notes:''},
+    {Variable:'RA_Confirmed',    Label:'RA Confirmed 2010 ACR/EULAR',       Type:'String',   Values:'Yes | No',                                      Notes:''},
+    {Variable:'Drug_Class',      Label:'b/tsDMARD Class',                   Type:'String',   Values:'Anti-TNF | Rituximab | Tocilizumab | Abatacept | Secukinumab | Tofacitinib | Baricitinib | Upadacitinib | Filgotinib | Other', Notes:''},
+    {Variable:'Drug_Name',       Label:'Drug Name (specify)',               Type:'String',   Values:'Free text',                                     Notes:''},
+    {Variable:'IGRA_Done',       Label:'IGRA Performed',                    Type:'String',   Values:'Yes | No | Not available',                      Notes:''},
+    {Variable:'IGRA_Result',     Label:'IGRA Result',                       Type:'String',   Values:'Positive | Negative | Indeterminate | N/A',     Notes:''},
+    {Variable:'TST_Done',        Label:'TST Performed',                     Type:'String',   Values:'Yes | No | Not available',                      Notes:''},
+    {Variable:'TST_Result',      Label:'TST Result',                        Type:'String',   Values:'Positive (>=10mm) | Negative | N/A',            Notes:'Threshold ≥10mm'},
+    {Variable:'TST_Induration_mm',Label:'TST Induration mm',               Type:'Numeric',  Values:'0–99',                                          Notes:'0 if N/A'},
+    {Variable:'CXR_Done',        Label:'CXR PA View Done',                  Type:'String',   Values:'Yes | No',                                      Notes:''},
+    {Variable:'CXR_Result',      Label:'CXR Result',                        Type:'String',   Values:'Normal | Old TB changes | Active TB changes | Not done', Notes:''},
+    {Variable:'LTBI_Documented', Label:'LTBI Documented in Record',         Type:'String',   Values:'Yes - complete | Partial | No',                 Notes:''},
+    {Variable:'LTBI_Detected',   Label:'LTBI Detected',                     Type:'String',   Values:'Yes | No',                                      Notes:''},
+    {Variable:'Prophylaxis_Given',Label:'Prophylaxis Prescribed',           Type:'String',   Values:'Yes | No',                                      Notes:''},
+    {Variable:'LTBI_Manager',    Label:'Who Managed LTBI Treatment',        Type:'String',   Values:'Rheumatology Dept | Referred to ID | Referred to Chest | Not documented', Notes:''},
+    {Variable:'Regimen',         Label:'Prophylaxis Regimen',               Type:'String',   Values:'INH x9m | INH+RIF x3m (3HR) | RIF x4m (4R) | Other', Notes:''},
+    {Variable:'Biologic_Timing', Label:'Biologic Timing vs Prophylaxis',    Type:'String',   Values:'After >=4wks | Simultaneously | Not documented', Notes:''},
+    {Variable:'Prophylaxis_Complete',Label:'Prophylaxis Completed',         Type:'String',   Values:'Yes | No | Ongoing | Not documented',           Notes:''},
+    {Variable:'Barrier_Identified',Label:'Barrier Identified',              Type:'String',   Values:'Yes | No',                                      Notes:''},
+    {Variable:'Barrier_Types',   Label:'Barrier Types',                     Type:'String',   Values:'Pipe-separated if multiple',                    Notes:''},
+    {Variable:'EULAR_Compliance',Label:'EULAR 2022 Compliance',             Type:'String',   Values:'Fully Compliant | Partial | Non-Compliant',     Notes:'Primary outcome'},
+    {Variable:'Auditor',         Label:'Auditor Name',                      Type:'String',   Values:'Dr. Aliza Kanwal | Dr. Areesha Tahir | Other',  Notes:''},
+    {Variable:'Designation',     Label:'Auditor Designation',               Type:'String',   Values:'House Officer | Post Graduate Resident | Other', Notes:''},
+    {Variable:'Saved_At',        Label:'Timestamp',                         Type:'String',   Values:'ISO 8601',                                      Notes:'Auto'},
+  ];
+  const ws2 = XLSX.utils.json_to_sheet(cbData);
+  ws2['!cols'] = [{wch:22},{wch:34},{wch:10},{wch:50},{wch:28}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Codebook');
+
+  // ── Sheet 3: Summary ─────────────────────────────────────
+  const n = records.length;
+  const cnt = (field, val) => records.filter(r => r[field]===val).length;
+  const pct = v => n ? (v/n*100).toFixed(1)+'%' : 'N/A';
+  const summaryData = [
+    {Metric:'Total patients',             Value:n,                         Percent:''},
+    {Metric:'Prospective cohort',         Value:cnt('cohort','Prospective'),Percent:pct(cnt('cohort','Prospective'))},
+    {Metric:'Retrospective cohort',       Value:cnt('cohort','Retrospective'),Percent:pct(cnt('cohort','Retrospective'))},
+    {Metric:'RA confirmed',               Value:cnt('ra','Yes'),           Percent:pct(cnt('ra','Yes'))},
+    {Metric:'--- SCREENING ---',          Value:'',                        Percent:''},
+    {Metric:'IGRA performed',             Value:cnt('igra_done','Yes'),    Percent:pct(cnt('igra_done','Yes'))},
+    {Metric:'IGRA positive',              Value:cnt('igra_res','Positive'),Percent:pct(cnt('igra_res','Positive'))},
+    {Metric:'TST performed',              Value:cnt('tst_done','Yes'),     Percent:pct(cnt('tst_done','Yes'))},
+    {Metric:'CXR done',                   Value:cnt('cxr_done','Yes'),     Percent:pct(cnt('cxr_done','Yes'))},
+    {Metric:'LTBI documented complete',   Value:cnt('ltbi_doc','Yes - complete'),Percent:pct(cnt('ltbi_doc','Yes - complete'))},
+    {Metric:'--- LTBI OUTCOMES ---',      Value:'',                        Percent:''},
+    {Metric:'LTBI detected',              Value:cnt('ltbi_det','Yes'),     Percent:pct(cnt('ltbi_det','Yes'))},
+    {Metric:'Prophylaxis prescribed',     Value:cnt('proph','Yes'),        Percent:pct(cnt('proph','Yes'))},
+    {Metric:'Prophylaxis completed',      Value:cnt('proph_done','Yes'),   Percent:pct(cnt('proph_done','Yes'))},
+    {Metric:'--- COMPLIANCE ---',         Value:'',                        Percent:''},
+    {Metric:'Fully Compliant',            Value:cnt('compliance','Fully Compliant'),Percent:pct(cnt('compliance','Fully Compliant'))},
+    {Metric:'Partial',                    Value:cnt('compliance','Partial'),Percent:pct(cnt('compliance','Partial'))},
+    {Metric:'Non-Compliant',              Value:cnt('compliance','Non-Compliant'),Percent:pct(cnt('compliance','Non-Compliant'))},
+  ];
+  const ws3 = XLSX.utils.json_to_sheet(summaryData);
+  ws3['!cols'] = [{wch:32},{wch:10},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws3, 'Summary');
+
+  const fname = `TB_Audit_PIMS_${new Date().toISOString().split('T')[0]}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  showToast('📊 Excel file exported!');
+}
+
+// ── SPSS SYNTAX EXPORT (.sps) ─────────────────────────────────
+function exportSPSS() {
+  if (!records.length) { showToast('⚠️ No records to export'); return; }
+
+  const today = new Date().toISOString().split('T')[0];
+  const fname = `TB_Audit_PIMS_${today}.csv`;
+
+  // First export the CSV
+  exportCSV();
+
+  // Then generate SPSS syntax file
+  const syntax = `* TB Screening Audit — PIMS Rheumatology | EULAR 2022
+* Generated: ${today}
+* Step 1: Run this syntax AFTER importing the CSV file named: ${fname}
+* =====================================================================
+
+* STEP 1 — Import the CSV (adjust file path as needed)
+GET DATA
+  /TYPE=TXT
+  /FILE='${fname}'
+  /ENCODING='Locale'
+  /DELIMITERS=","
+  /QUALIFIER='"'
+  /ARRANGEMENT=DELIMITED
+  /FIRSTCASE=2
+  /IMPORTCASE=ALL
+  /VARIABLES=
+    Serial_No        F8.0
+    MR_No            A20
+    Date             A12
+    Cohort           A20
+    Age              F3.0
+    Gender           A10
+    RA_Confirmed     A5
+    Drug_Class       A20
+    Drug_Name        A30
+    IGRA_Done        A20
+    IGRA_Result      A20
+    TST_Done         A20
+    TST_Result       A25
+    TST_Induration_mm F3.0
+    CXR_Done         A5
+    CXR_Result       A25
+    LTBI_Documented  A20
+    LTBI_Detected    A5
+    Prophylaxis_Given A5
+    LTBI_Manager     A40
+    Regimen          A30
+    Biologic_Timing  A40
+    Prophylaxis_Complete A30
+    Barrier_Identified A5
+    Barrier_Types    A80
+    EULAR_Compliance A20
+    Auditor          A40
+    Designation      A40
+    Saved_At         A30.
+CACHE.
+EXECUTE.
+
+* STEP 2 — Apply variable labels
+VARIABLE LABELS
+  Serial_No        'Serial Number'
+  MR_No            'MR No / Patient ID'
+  Date             'Date of Data Collection'
+  Cohort           'Study Cohort'
+  Age              'Age in Years'
+  Gender           'Gender'
+  RA_Confirmed     'RA Confirmed (2010 ACR/EULAR)'
+  Drug_Class       'b/tsDMARD Class'
+  Drug_Name        'Drug Name (specified)'
+  IGRA_Done        'IGRA Performed'
+  IGRA_Result      'IGRA Result'
+  TST_Done         'TST Performed'
+  TST_Result       'TST Result'
+  TST_Induration_mm 'TST Induration (mm)'
+  CXR_Done         'CXR (PA view) Performed'
+  CXR_Result       'CXR Result'
+  LTBI_Documented  'LTBI Documented in Clinical Record'
+  LTBI_Detected    'LTBI Detected'
+  Prophylaxis_Given 'Prophylaxis Prescribed'
+  LTBI_Manager     'Who Managed LTBI Treatment'
+  Regimen          'Prophylaxis Regimen'
+  Biologic_Timing  'Biologic Timing Relative to Prophylaxis'
+  Prophylaxis_Complete 'Prophylaxis Completed Before Biologic'
+  Barrier_Identified 'Barrier to Screening Identified'
+  Barrier_Types    'Barrier Types'
+  EULAR_Compliance 'Overall EULAR 2022 Compliance Rating'
+  Auditor          'Auditor Name'
+  Designation      'Auditor Designation'.
+EXECUTE.
+
+* STEP 3 — Compute numeric coding for key variables (for analysis)
+RECODE RA_Confirmed ('Yes'=1)('No'=2) INTO RA_Code.
+RECODE IGRA_Done ('Yes'=1)('No'=2)('Not available'=3) INTO IGRA_Done_Code.
+RECODE TST_Done  ('Yes'=1)('No'=2)('Not available'=3) INTO TST_Done_Code.
+RECODE CXR_Done  ('Yes'=1)('No'=2) INTO CXR_Done_Code.
+RECODE LTBI_Detected ('Yes'=1)('No'=2) INTO LTBI_Code.
+RECODE EULAR_Compliance
+  ('Fully Compliant'=1)('Partial'=2)('Non-Compliant'=3)
+  INTO Compliance_Code.
+VARIABLE LABELS
+  RA_Code          'RA Confirmed (coded)'
+  IGRA_Done_Code   'IGRA Performed (coded)'
+  TST_Done_Code    'TST Performed (coded)'
+  CXR_Done_Code    'CXR Done (coded)'
+  LTBI_Code        'LTBI Detected (coded)'
+  Compliance_Code  'EULAR Compliance (coded)'.
+VALUE LABELS
+  RA_Code IGRA_Done_Code TST_Done_Code CXR_Done_Code LTBI_Code
+  1 'Yes' 2 'No' 3 'Not available'.
+VALUE LABELS
+  Compliance_Code 1 'Fully Compliant' 2 'Partial' 3 'Non-Compliant'.
+EXECUTE.
+
+* STEP 4 — Basic frequencies (run after import)
+FREQUENCIES VARIABLES=Gender RA_Code Drug_Class IGRA_Done_Code
+  TST_Done_Code CXR_Done_Code LTBI_Code Compliance_Code
+  /ORDER=ANALYSIS.
+
+* STEP 5 — Descriptives for continuous variables
+DESCRIPTIVES VARIABLES=Age TST_Induration_mm
+  /STATISTICS=MEAN STDDEV MIN MAX.
+
+* End of syntax file.
+`;
+
+  const blob = new Blob([syntax], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `TB_Audit_PIMS_SPSS_Syntax_${today}.sps`;
+  a.click();
+  showToast('📋 CSV + SPSS syntax exported!');
+}
+
+// ── RENDER EXPORT PAGE ────────────────────────────────────────
+function renderExport() {
+  const el = document.getElementById('exportContent');
+  const n = records.length;
+  el.innerHTML = `
+    <div class="info-card">
+      <strong>📦 ${n} record${n!==1?'s':''} ready to export</strong>
+      Choose your export format below. All formats contain identical data —
+      pick based on what you need next.
+    </div>
+
+    <div class="exp-section">
+      <div class="exp-sec-title">Spreadsheet Formats</div>
+
+      <div class="exp-card">
+        <div class="exp-ico" style="background:rgba(0,201,167,.1)">📊</div>
+        <div class="exp-info">
+          <div class="exp-name">Excel Workbook (.xlsx)</div>
+          <div class="exp-desc">3 sheets: Data Entry (SPSS-ready) · Codebook · Summary statistics. Matches the master Excel sheet structure exactly.</div>
+        </div>
+        <button class="exp-go" style="background:var(--teal);color:#000" onclick="exportExcel()">Export</button>
+      </div>
+
+      <div class="exp-card">
+        <div class="exp-ico" style="background:rgba(59,130,246,.1)">📄</div>
+        <div class="exp-info">
+          <div class="exp-name">CSV File (.csv)</div>
+          <div class="exp-desc">Plain comma-separated file. Compatible with Excel, Google Sheets, R, and SPSS direct import.</div>
+        </div>
+        <button class="exp-go" style="background:var(--blue);color:#fff" onclick="exportCSV()">Export</button>
+      </div>
+    </div>
+
+    <div class="exp-section">
+      <div class="exp-sec-title">SPSS Package</div>
+
+      <div class="exp-card">
+        <div class="exp-ico" style="background:rgba(245,158,11,.1)">🔬</div>
+        <div class="exp-info">
+          <div class="exp-name">CSV + SPSS Syntax (.csv + .sps)</div>
+          <div class="exp-desc">Exports the data as CSV <em>and</em> a ready-to-run SPSS syntax file (.sps) with variable labels, value labels, recode commands, and basic frequency analysis.</div>
+        </div>
+        <button class="exp-go" style="background:var(--amber);color:#000" onclick="exportSPSS()">Export</button>
+      </div>
+    </div>
+
+    <div class="exp-section">
+      <div class="exp-sec-title">How to use in SPSS</div>
+      <div style="background:var(--card);border-radius:var(--radius);border:1px solid var(--border2);padding:16px;font-size:12.5px;color:var(--text2);line-height:1.8;box-shadow:var(--shadow)">
+        <b>Option A — Direct Excel import:</b><br>
+        1. Export Excel (.xlsx) above<br>
+        2. In SPSS: File → Import Data → Excel<br>
+        3. Select the file → choose sheet <b>"Data Entry"</b><br>
+        4. Start row = 1, tick "Read variable names from first row"<br>
+        5. Click OK → apply value labels from Codebook sheet<br><br>
+        <b>Option B — CSV + Syntax (recommended):</b><br>
+        1. Export SPSS package above (saves CSV + .sps syntax file)<br>
+        2. In SPSS: File → Open → Syntax → select the .sps file<br>
+        3. Edit the file path on line 8 to match where you saved the CSV<br>
+        4. Run All (Ctrl+A then Ctrl+R)<br>
+        5. SPSS imports data, applies all labels and recodes automatically
+      </div>
+    </div>
+  `;
+}
+
+// ── TABS ──────────────────────────────────────────────────
+function showTab(tab) {
+  const map = {form:'Form',dash:'Dash',rec:'Rec',export:'Export'};
+  Object.keys(map).forEach(t => {
+    document.getElementById('page'+map[t]).classList.toggle('active', t===tab);
+    document.getElementById('nb_'+t).classList.toggle('active', t===tab);
+  });
+  document.getElementById('scrollArea').scrollTo({top:0});
+  if (tab==='dash')   renderDash();
+  if (tab==='rec')    renderRecords();
+  if (tab==='export') renderExport();
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+// ── PWA INSTALL ───────────────────────────────────────────
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+document.getElementById('installBtn').addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  document.getElementById('installBanner').classList.remove('show');
+  if (outcome === 'accepted') showToast('🎉 App installed on your device!');
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').classList.remove('show');
+  showToast('🎉 App installed successfully!');
+});
+
+// ── SERVICE WORKER ────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('SW registered'))
+      .catch(e => console.log('SW error', e));
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────
+buildPills();
+document.getElementById('f_date').valueAsDate = new Date();
+upd();
+persist();
+</script>
+</body>
+</html>
+
